@@ -1,0 +1,4 @@
+interface:
+  display_name: "Data Augmentation Skill Evolver"
+  short_description: "Generate, evaluate, and optionally evolve domain data augmentation workflows"
+  default_prompt: "Use $data-augmentation-skill-evolver to generate and evaluate domain data from a PRD, query, or seed JSONL, with optional user-approved skill evolution."

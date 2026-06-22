@@ -1,0 +1,17 @@
+.DS_Store
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+.env
+.env.*
+!.env.example
+
+.data-augmentation/runs/
+generated.jsonl
+generation_report.json
+eval_report.json
+
+*.log
