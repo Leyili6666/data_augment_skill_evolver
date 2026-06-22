@@ -1,5 +1,7 @@
 # Data Augmentation Skill Evolver
 
+[简体中文](README.zh-CN.md) | English
+
 An agent-agnostic skill package for generating, evaluating, and optionally evolving
 domain-specific data augmentation workflows. It can be used from Codex, Claude Code, Cursor, or
 other agent runtimes that can load project instructions, skills, or rules.

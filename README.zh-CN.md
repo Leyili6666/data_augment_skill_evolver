@@ -1,5 +1,7 @@
 # Data Augmentation Skill Evolver
 
+简体中文 | [English](README.md)
+
 一个面向多种 Agent 的数据增强 Skill 包，支持在 Codex、Claude Code、Cursor 以及其他可读取项目
 规则、技能或说明文件的 Agent 中使用。它可以根据 query、PRD、规范文档、seed JSONL 或已有样本
 生成、评估，并可选地自进化项目级数据增强能力。
