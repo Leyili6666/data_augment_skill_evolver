@@ -235,10 +235,14 @@ class EvaluationTests(unittest.TestCase):
             self.assertEqual(report["summary"]["overall"], 3.5)
             self.assertEqual(len(report["low_scoring"]), 1)
             self.assertEqual(report["evidence"]["failure_tag_counts"]["unnatural_language"], 1)
+            self.assertEqual(report["bad_case_report"]["counts"]["bad_cases"], 1)
+            self.assertEqual(report["bad_case_report"]["bad_cases"][0]["reason"], "low_score")
+            self.assertIn("human_review", report["bad_case_report"]["bad_cases"][0])
             bad_report = json.loads((directory / "eval_bad_cases.json").read_text(encoding="utf-8"))
             self.assertEqual(bad_report["counts"]["bad_cases"], 1)
             self.assertEqual(bad_report["bad_cases"][0]["reason"], "low_score")
             self.assertIn("human_review", bad_report["bad_cases"][0])
+            self.assertEqual(report["bad_case_report"]["bad_cases"], bad_report["bad_cases"])
 
     def test_full_dataset_is_evaluated_when_sample_is_zero(self):
         with tempfile.TemporaryDirectory() as temp:

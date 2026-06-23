@@ -238,8 +238,9 @@ python3 <skill-dir>/scripts/evaluate_data.py \
 默认会评估全部有效记录；只有用户明确要求抽样时才允许传入 `--sample <n>`。如果没有仲裁或仲裁
 失败，脚本会降级为各维度中位数共识。展示生成数据、评委分歧、维度平均分、最终仲裁和坏数据报告。
 
-`eval_bad_cases.json` 必须额外保存低分数据、格式错误数据、模型评分、问题说明和人工复核占位字段，
-方便用户人工核实并和完整评估结果对比。
+`eval_report.json` 必须内嵌完整 `bad_case_report`，包含低分数据、格式错误数据、模型评分、问题说明
+和人工复核占位字段。同时额外导出同内容的 `eval_bad_cases.json`，方便用户人工核实并和完整评估
+结果对比。
 
 `evolve` 模式下，询问用户逐条 `accept/revise/reject` 和整体方向，并规范化为
 `human_feedback.json`。不得编造用户没有提供的反馈。`generate_evaluate` 模式下，展示结果后直接

@@ -22,7 +22,8 @@
    `format_drift`、`off_task`、`unnatural_language`、`low_diversity`、
    `domain_error`、`unsafe_response`、`overfit_to_seed`。
 6. 对比通过与失败案例，找出失败共性，也保留通过案例中值得延续的行为。
-7. 额外写出 `eval_bad_cases.json`，保存格式错误、低分样本、评分、问题、仲裁和人工复核占位字段。
+7. 在 `eval_report.json` 中内嵌完整 `bad_case_report`，并额外写出同内容的 `eval_bad_cases.json`，
+   保存格式错误、低分样本、评分、问题、仲裁和人工复核占位字段。
 
 ## 证据规则
 
@@ -62,8 +63,9 @@
 ```
 
 `scores` 是最终仲裁结果的兼容别名。原始评委意见必须保留，不能只保留仲裁结论。
-`bad_case_report.output` 指向额外坏数据报告，默认是 `eval_bad_cases.json`。该报告必须包含
-`bad_cases` 数组，每条保留原始记录、原因、分数、问题和 `human_review` 占位字段。
+`bad_case_report.output` 指向额外坏数据报告，默认是 `eval_bad_cases.json`。`eval_report.json` 内的
+`bad_case_report` 必须直接包含完整 `bad_cases` 数组；额外文件只是同内容副本，便于人工核实。每条
+坏数据需保留原始记录、原因、分数、问题和 `human_review` 占位字段。
 
 给提议智能体的摘要应明确：重复失败模式、受影响样本、通过样本中的保护项、证据强度，以及需要
 人工判断的冲突。

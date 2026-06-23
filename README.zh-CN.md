@@ -17,7 +17,7 @@
 - 支持基于已有 JSONL 的逐条泛化：`generalize_by_record`。
 - 使用结构化 `generation_prompt.json` 和 `evaluation_prompt.json`。
 - 支持多评委模型评估与仲裁。
-- 默认评估完整生成数据，并额外保存低分/问题数据报告供人工核实。
+- 默认评估完整生成数据；完整评估报告内包含 bad cases，并额外导出同内容报告供人工核实。
 - 不把 API Key 写入任何产物。
 - 项目 Skill 和全局规则必须用户明确确认后才会推广。
 
@@ -256,8 +256,9 @@ python3 scripts/evaluate_data.py \
 评估默认覆盖完整生成数据。只有你明确要求抽样时，才会使用 `--sample <n>`。评估 Prompt 可以先根据
 你的关注点定制维度，每个维度按 1-5 分打分，脚本会计算逐条 `overall` 和整体均分。
 
-低分、格式错误和需要人工核实的数据会额外保存到 `eval_bad_cases.json`，其中包含原始记录、问题原因、
-模型评分、仲裁结果和 `human_review` 人工复核占位字段，便于你核实后和完整评估报告对比。
+低分、格式错误和需要人工核实的数据会写入 `eval_report.json` 的 `bad_case_report`，其中包含原始
+记录、问题原因、模型评分、仲裁结果和 `human_review` 人工复核占位字段。同时同内容会额外导出到
+`eval_bad_cases.json`，便于你单独打开核实并和完整评估报告对比。
 
 ## 运行产物
 

@@ -20,8 +20,8 @@ optionally used to improve a project-level data augmentation skill after explici
 - Supports per-record generalization from existing data.
 - Evaluates generated records with deterministic checks, multiple judge models, and optional
   arbitration.
-- Evaluates the complete generated dataset by default and writes a separate bad-case report for
-  human review.
+- Evaluates the complete generated dataset by default, embeds bad cases in the main report, and
+  also exports the same bad-case report for human review.
 - Keeps API keys out of persisted artifacts.
 - Requires explicit approval before writing project skills or global rules.
 
@@ -305,8 +305,9 @@ fails, it falls back to median consensus. It evaluates all valid generated recor
 `--sample <n>` only when you explicitly want sampled evaluation.
 
 Low-scoring records, format-invalid records, parse errors, judge results, arbitration, and blank
-human-review fields are also written to `eval_bad_cases.json` so you can manually verify and
-compare problematic data against the full evaluation report.
+human-review fields are included in `eval_report.json` under `bad_case_report`. The same content is
+also written to `eval_bad_cases.json` so you can manually verify problematic data while comparing
+against the full evaluation report.
 
 ## Run Artifacts
 

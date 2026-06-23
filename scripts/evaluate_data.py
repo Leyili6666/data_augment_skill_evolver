@@ -120,8 +120,7 @@ def resolve_bad_output_path(output_path: Path, configured: str) -> Path:
     return output_path.with_name(output_path.stem + "_bad_cases.json")
 
 
-def write_bad_case_report(
-    path: Path,
+def build_bad_case_report(
     input_path: str,
     threshold: float,
     parse_errors: List[Dict[str, Any]],
@@ -179,9 +178,12 @@ def write_bad_case_report(
         "parse_errors": parse_errors,
         "bad_cases": bad_cases,
     }
+    return report
+
+
+def write_bad_case_report(path: Path, report: Dict[str, Any]) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(json.dumps(report, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
-    return report
 
 
 def build_provider(model_config: Dict[str, Any], args: argparse.Namespace):
@@ -424,10 +426,11 @@ def evaluate(args: argparse.Namespace) -> Dict[str, Any]:
         and item["scores"]["overall"] < args.low_score_threshold
     ]
     bad_output_path = resolve_bad_output_path(Path(args.output), args.bad_output)
-    bad_case_report = write_bad_case_report(
-        bad_output_path, args.input, args.low_score_threshold, parse_errors,
+    bad_case_report = build_bad_case_report(
+        args.input, args.low_score_threshold, parse_errors,
         deterministic, input_records, details,
     )
+    write_bad_case_report(bad_output_path, bad_case_report)
     report = {
         "input": args.input,
         "output": args.output,
@@ -467,10 +470,7 @@ def evaluate(args: argparse.Namespace) -> Dict[str, Any]:
         "seed_parse_errors": seed_parse_errors,
         "format_validation": deterministic,
         "details": details,
-        "bad_case_report": {
-            "output": str(bad_output_path),
-            "counts": bad_case_report["counts"],
-        },
+        "bad_case_report": dict({"output": str(bad_output_path)}, **bad_case_report),
     }
     output = Path(args.output)
     output.parent.mkdir(parents=True, exist_ok=True)
