@@ -19,8 +19,9 @@
 4. Generator：provider、model、必要时的 API base、API Key 环境变量名。
 5. 评委数量，以及每个独立评委的 API 配置。
 6. 仲裁模型：provider、model、必要时的 API base、API Key 环境变量名。
-7. 仅 `evolve`：Proposer，当前会话或外部 API 模型。
-8. 仅 `evolve`：Skill Builder 和独立 Auditor，当前会话或外部 API 模型。
+7. 用户最关注的评估维度，例如 PRD 覆盖、MVP 流程覆盖、格式正确性、自然度、多样性、是否过度复制 seed。
+8. 仅 `evolve`：Proposer，当前会话或外部 API 模型。
+9. 仅 `evolve`：Skill Builder 和独立 Auditor，当前会话或外部 API 模型。
 
 建议至少使用两个不同 provider/model 身份的评委，并让仲裁模型尽量不同于评委。说明原始 API Key
 可以只在当前会话中提供，但不会写入产物；更推荐环境变量。
@@ -35,8 +36,9 @@
 4. 数据生成模型：provider、model、api_base、API Key 环境变量名
 5. 评委数量，以及每个评委的 provider、model、api_base、API Key 环境变量名
 6. 仲裁模型：provider、model、api_base、API Key 环境变量名
-7. 仅自进化模式：提议模型
-8. 仅自进化模式：技能构建模型与独立审计模型
+7. 你最关注的评估维度；不提供则根据任务自动推断
+8. 仅自进化模式：提议模型
+9. 仅自进化模式：技能构建模型与独立审计模型
 ```
 
 ## workflow_config.json

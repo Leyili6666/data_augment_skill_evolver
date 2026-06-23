@@ -235,6 +235,26 @@ class EvaluationTests(unittest.TestCase):
             self.assertEqual(report["summary"]["overall"], 3.5)
             self.assertEqual(len(report["low_scoring"]), 1)
             self.assertEqual(report["evidence"]["failure_tag_counts"]["unnatural_language"], 1)
+            bad_report = json.loads((directory / "eval_bad_cases.json").read_text(encoding="utf-8"))
+            self.assertEqual(bad_report["counts"]["bad_cases"], 1)
+            self.assertEqual(bad_report["bad_cases"][0]["reason"], "low_score")
+            self.assertIn("human_review", bad_report["bad_cases"][0])
+
+    def test_full_dataset_is_evaluated_when_sample_is_zero(self):
+        with tempfile.TemporaryDirectory() as temp:
+            directory = Path(temp)
+            data = directory / "data.jsonl"
+            records = [
+                {"messages": [{"role": "user", "content": "hi"}, {"role": "assistant", "content": "hello"}]},
+                {"messages": [{"role": "user", "content": "bye"}, {"role": "assistant", "content": "goodbye"}]},
+            ]
+            data.write_text("\n".join(json.dumps(item) for item in records) + "\n", encoding="utf-8")
+            args = self._args(data, directory / "eval.json", deterministic_only=False)
+            args.sample = 0
+            report = evaluate(args)
+            self.assertEqual(report["counts"]["format_valid"], 2)
+            self.assertEqual(report["counts"]["llm_evaluated"], 2)
+            self.assertEqual(report["counts"]["llm_evaluation_scope"], "all_valid_records")
 
     def test_multiple_judges_and_model_arbitration(self):
         with tempfile.TemporaryDirectory() as temp:
@@ -282,7 +302,7 @@ class EvaluationTests(unittest.TestCase):
         return argparse.Namespace(
             input=str(data), seed="", prompt_spec="", output=str(output), task_desc="test",
             sample=40, random_seed=42, low_score_threshold=4.0,
-            deterministic_only=deterministic_only, provider="",
+            deterministic_only=deterministic_only, bad_output="", provider="",
             provider_module=str(MOCK_PROVIDER), api_base="", api_key="", api_key_env="",
             model="mock", timeout=1, max_retries=1,
         )

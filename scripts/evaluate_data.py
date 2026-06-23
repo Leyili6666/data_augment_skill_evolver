@@ -114,6 +114,76 @@ def summarize(scores: List[Dict[str, Any]], dimensions: List[str]) -> Dict[str, 
     return result
 
 
+def resolve_bad_output_path(output_path: Path, configured: str) -> Path:
+    if configured:
+        return Path(configured)
+    return output_path.with_name(output_path.stem + "_bad_cases.json")
+
+
+def write_bad_case_report(
+    path: Path,
+    input_path: str,
+    threshold: float,
+    parse_errors: List[Dict[str, Any]],
+    deterministic: List[Dict[str, Any]],
+    input_records: List[Any],
+    details: List[Dict[str, Any]],
+) -> Dict[str, Any]:
+    bad_cases = []
+    for item in deterministic:
+        if item["valid"]:
+            continue
+        index = item["index"]
+        bad_cases.append({
+            "index": index,
+            "reason": "format_invalid",
+            "record": input_records[index] if index < len(input_records) else None,
+            "format_errors": item["errors"],
+            "scores": None,
+            "judge_results": [],
+            "arbitration": None,
+            "human_review": {
+                "verdict": "",
+                "notes": "",
+                "corrective_action": "",
+            },
+        })
+    for detail in details:
+        scores = detail.get("scores")
+        if not scores or scores.get("overall") is None or scores["overall"] >= threshold:
+            continue
+        bad_cases.append({
+            "index": detail["index"],
+            "reason": "low_score",
+            "record": detail.get("example"),
+            "format_errors": deterministic[detail["index"]]["errors"] if detail["index"] < len(deterministic) else [],
+            "scores": scores,
+            "judge_results": detail.get("judge_results", []),
+            "arbitration": detail.get("arbitration"),
+            "human_review": {
+                "verdict": "",
+                "notes": "",
+                "corrective_action": "",
+            },
+        })
+    bad_cases.sort(key=lambda item: (item["index"] if item["index"] is not None else -1, item["reason"]))
+    report = {
+        "input": input_path,
+        "low_score_threshold": threshold,
+        "counts": {
+            "parse_errors": len(parse_errors),
+            "bad_cases": len(bad_cases),
+            "format_invalid": sum(1 for item in bad_cases if item["reason"] == "format_invalid"),
+            "low_score": sum(1 for item in bad_cases if item["reason"] == "low_score"),
+        },
+        "parse_errors": parse_errors,
+        "bad_cases": bad_cases,
+    }
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(json.dumps(report, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+    return report
+
+
 def build_provider(model_config: Dict[str, Any], args: argparse.Namespace):
     return create_provider(
         model_config.get("provider", "auto"),
@@ -273,8 +343,11 @@ def evaluate(args: argparse.Namespace) -> Dict[str, Any]:
             arbitrator_provider = build_provider(arbitrator_config, args)
 
     random.seed(args.random_seed)
-    sample_count = min(args.sample, len(valid_records))
-    sampled = random.sample(valid_records, sample_count) if sample_count else []
+    if args.sample is None or args.sample < 1:
+        sampled = list(valid_records)
+    else:
+        sample_count = min(args.sample, len(valid_records))
+        sampled = random.sample(valid_records, sample_count) if sample_count else []
     reference_pool = seed_records or input_records
     reference = random.choice(reference_pool) if reference_pool else {}
     system_prompt = spec.get("system_prompt", DEFAULT_SYSTEM_PROMPT)
@@ -350,15 +423,22 @@ def evaluate(args: argparse.Namespace) -> Dict[str, Any]:
         if item.get("scores") and item["scores"].get("overall") is not None
         and item["scores"]["overall"] < args.low_score_threshold
     ]
+    bad_output_path = resolve_bad_output_path(Path(args.output), args.bad_output)
+    bad_case_report = write_bad_case_report(
+        bad_output_path, args.input, args.low_score_threshold, parse_errors,
+        deterministic, input_records, details,
+    )
     report = {
         "input": args.input,
         "output": args.output,
+        "bad_output": str(bad_output_path),
         "counts": {
             "records": len(input_records),
             "parse_errors": len(parse_errors),
             "format_valid": sum(1 for item in deterministic if item["valid"]),
             "format_invalid": sum(1 for item in deterministic if not item["valid"]),
             "llm_evaluated": len(scored),
+            "llm_evaluation_scope": "all_valid_records" if args.sample is None or args.sample < 1 else "sampled",
             "judge_calls_succeeded": sum(
                 1 for item in details for result in item.get("judge_results", []) if result.get("scores")
             ),
@@ -387,6 +467,10 @@ def evaluate(args: argparse.Namespace) -> Dict[str, Any]:
         "seed_parse_errors": seed_parse_errors,
         "format_validation": deterministic,
         "details": details,
+        "bad_case_report": {
+            "output": str(bad_output_path),
+            "counts": bad_case_report["counts"],
+        },
     }
     output = Path(args.output)
     output.parent.mkdir(parents=True, exist_ok=True)
@@ -400,8 +484,12 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--seed", default="")
     parser.add_argument("--prompt-spec", default="")
     parser.add_argument("--output", default="eval_report.json")
+    parser.add_argument("--bad-output", default="")
     parser.add_argument("--task-desc", default="")
-    parser.add_argument("--sample", type=int, default=40)
+    parser.add_argument(
+        "--sample", type=int, default=0,
+        help="Number of valid records to LLM-evaluate; 0 or omitted evaluates all valid records",
+    )
     parser.add_argument("--random-seed", type=int, default=42)
     parser.add_argument("--low-score-threshold", type=float, default=3.0)
     parser.add_argument("--deterministic-only", action="store_true")

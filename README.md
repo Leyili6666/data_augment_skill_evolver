@@ -20,6 +20,8 @@ optionally used to improve a project-level data augmentation skill after explici
 - Supports per-record generalization from existing data.
 - Evaluates generated records with deterministic checks, multiple judge models, and optional
   arbitration.
+- Evaluates the complete generated dataset by default and writes a separate bad-case report for
+  human review.
 - Keeps API keys out of persisted artifacts.
 - Requires explicit approval before writing project skills or global rules.
 
@@ -204,7 +206,8 @@ PRD coverage, format correctness, relevance, and dialogue coherence.
 
 At the beginning of a run, the skill asks for the full workflow configuration: generation model,
 judge models, arbitrator model, API provider details, and whether helper roles run in the current
-session or through an API.
+session or through an API. It can also ask which evaluation dimensions matter most to you, then
+turn those priorities into scored 1-5 rubric dimensions.
 
 When a PRD is provided, the skill must show the PRD analysis and wait for user approval before
 writing generation prompts or generating data.
@@ -293,11 +296,17 @@ LLM judge evaluation:
 python3 scripts/evaluate_data.py \
   --input generated.jsonl \
   --prompt-spec evaluation_prompt.json \
-  --output eval_report.json
+  --output eval_report.json \
+  --bad-output eval_bad_cases.json
 ```
 
 The evaluator supports multiple judges and an optional arbitrator. If arbitration is absent or
-fails, it falls back to median consensus.
+fails, it falls back to median consensus. It evaluates all valid generated records by default; use
+`--sample <n>` only when you explicitly want sampled evaluation.
+
+Low-scoring records, format-invalid records, parse errors, judge results, arbitration, and blank
+human-review fields are also written to `eval_bad_cases.json` so you can manually verify and
+compare problematic data against the full evaluation report.
 
 ## Run Artifacts
 
@@ -316,6 +325,7 @@ Common artifacts:
 - `generated.jsonl`
 - `generation_report.json`
 - `eval_report.json`
+- `eval_bad_cases.json`
 
 PRD artifacts are created when a PRD or requirements document is provided:
 

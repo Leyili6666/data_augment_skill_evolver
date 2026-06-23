@@ -12,7 +12,8 @@
 ## 评估顺序
 
 1. 检查 JSONL 可解析性、记录类型、必填字段和领域数据契约。
-2. 对有效记录调用多个独立评委模型。评委应尽量使用不同模型或模型家族，彼此不可读取其他评委
+2. 对完整生成数据中的全部有效记录调用多个独立评委模型。只有用户明确要求抽样时，才允许使用
+   `--sample <n>`。评委应尽量使用不同模型或模型家族，彼此不可读取其他评委
    的结果。
 3. 将确定性校验和全部 `judge_results` 交给仲裁模型，生成最终 `arbitration`。若仲裁模型失败，
    使用各维度中位数共识降级，并明确记录 `strategy: median`。
@@ -21,6 +22,7 @@
    `format_drift`、`off_task`、`unnatural_language`、`low_diversity`、
    `domain_error`、`unsafe_response`、`overfit_to_seed`。
 6. 对比通过与失败案例，找出失败共性，也保留通过案例中值得延续的行为。
+7. 额外写出 `eval_bad_cases.json`，保存格式错误、低分样本、评分、问题、仲裁和人工复核占位字段。
 
 ## 证据规则
 
@@ -31,6 +33,7 @@
 - 如果评委分差达到 2 分或以上，将该维度记录到 `disagreements`，降低裁决置信度。
 - 检查 `configuration_warnings`；评委应使用不同模型身份，仲裁模型也应尽量不同于评委。
 - 不把种子数据默认视为正确；可报告种子本身的问题。
+- 坏数据报告是给用户人工核实和对比的材料，不等同于自动删除清单。
 
 ## 输出契约
 
@@ -45,6 +48,7 @@
   "judge_summaries": {},
   "summary": {},
   "low_scoring": [],
+  "bad_case_report": {},
   "parse_errors": [],
   "format_validation": [],
   "details": [
@@ -58,6 +62,8 @@
 ```
 
 `scores` 是最终仲裁结果的兼容别名。原始评委意见必须保留，不能只保留仲裁结论。
+`bad_case_report.output` 指向额外坏数据报告，默认是 `eval_bad_cases.json`。该报告必须包含
+`bad_cases` 数组，每条保留原始记录、原因、分数、问题和 `human_review` 占位字段。
 
 给提议智能体的摘要应明确：重复失败模式、受影响样本、通过样本中的保护项、证据强度，以及需要
 人工判断的冲突。
